@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Balance Quest</title>
+<style>
+/* ═══════════════════════════════════════
+   SINGLE-STORY 'a' FONT STACK
+   Century Gothic → Futura → Trebuchet MS → Comic Sans MS
+   All have single-story lowercase 'a'
+   ═══════════════════════════════════════ */
+:root {
+  --font-main: "Century Gothic", "CenturyGothic", "Futura", "Trebuchet MS", "Comic Sans MS", "Comic Sans", sans-serif;
+  --font-display: "Century Gothic", "CenturyGothic", "Futura", "Trebuchet MS", "Comic Sans MS", "Comic Sans", sans-serif;
+
+  /* Core palette */
+  --bg-dark: #1a1a2e;
+  --bg-card: #ffffff;
+  --text-dark: #2d2d44;
+  --text-light: #ffffff;
+  --text-muted: #6b7280;
+
+  /* Station accent colors */
+  --color-start: #ef4444;
+  --color-focus: #6366f1;
+  --color-connect: #10b981;
+  --color-plan: #f59e0b;
+  --color-eyes: #06b6d4;
+  --color-balance: #8b5cf6;
+
+  /* Choice colors */
+  --color-choice-a: #10b981;
+  --color-choice-a-hover: #059669;
+  --color-choice-b: #f97316;
+  --color-choice-b-hover: #ea580c;
+
+  /* Gremlin red */
+  --color-gremlin: #ef4444;
+
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.12);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.18);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--bg-dark);
+  color: var(--text-dark);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  line-height: 1.6;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════
+   BACKGROUND PATTERN
+   ═══════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(99,102,241,0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(16,185,129,0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(245,158,11,0.08) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══════════════════════════════════════
+   STATION CONTAINER
+   ═══════════════════════════════════════ */
+.station {
+  display: none;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 16px 100px;
+  position: relative;
+  z-index: 1;
+  animation: fadeSlideIn 0.5s ease-out;
+}
+
+.station.active {
+  display: block;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════
+   BALANCE METER
+   ═══════════════════════════════════════ */
+.balance-meter {
+  display: flex;
+  gap: 6px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.08);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.meter-segment {
+  flex: 1;
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.08);
+  transition: all 0.4s ease;
+}
+
+.meter-segment.completed {
+  color: white;
+  border-color: transparent;
+  animation: meterGlow 2s ease-in-out infinite alternate;
+}
+
+.meter-segment.current {
+  color: white;
+  border-style: dashed;
+  animation: meterPulse 1.5s ease-in-out infinite;
+}
+
+.meter-segment[data-meter="focus"].completed,
+.meter-segment[data-meter="focus"].current { background: var(--color-focus); border-color: var(--color-focus); }
+.meter-segment[data-meter="connect"].completed,
+.meter-segment[data-meter="connect"].current { background: var(--color-connect); border-color: var(--color-connect); }
+.meter-segment[data-meter="plan"].completed,
+.meter-segment[data-meter="plan"].current { background: var(--color-plan); border-color: var(--color-plan); }
+.meter-segment[data-meter="eyes"].completed,
+.meter-segment[data-meter="eyes"].current { background: var(--color-eyes); border-color: var(--color-eyes); }
+.meter-segment[data-meter="balance"].completed,
+.meter-segment[data-meter="balance"].current { background: var(--color-balance); border-color: var(--color-balance); }
+
+@keyframes meterPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.85; }
+}
+
+@keyframes meterGlow {
+  from { box-shadow: 0 0 8px rgba(255,255,255,0.2); }
+  to { box-shadow: 0 0 16px rgba(255,255,255,0.4); }
+}
+
+/* ═══════════════════════════════════════
+   HEADER / TITLE AREA
+   ═══════════════════════════════════════ */
+.station-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.station-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.station-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-light);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.station-location {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.station-location .pin {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+/* ═══════════════════════════════════════
+   CONTENT CARD
+   ═══════════════════════════════════════ */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title .icon {
+  font-size: 20px;
+}
+
+.story-text {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text-dark);
+}
+
+.story-text p {
+  margin-bottom: 14px;
+}
+
+.story-text p:last-child {
+  margin-bottom: 0;
+}
+
+.gremlin-speech {
+  background: linear-gradient(135deg, #fef2f2, #fff1f2);
+  border-left: 4px solid var(--color-gremlin);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 14px 18px;
+  margin: 16px 0;
+  font-style: italic;
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.say-together {
+  background: linear-gradient(135deg, #eff6ff, #ede9fe);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--color-focus);
+  margin-top: 16px;
+  border: 2px dashed rgba(99,102,241,0.3);
+}
+
+/* ═══════════════════════════════════════
+   CHOICE BUTTONS
+   ═══════════════════════════════════════ */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.choice-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--radius);
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: var(--font-main);
+  font-size: 16px;
+  text-align: left;
+  line-height: 1.5;
+  position: relative;
+  overflow: hidden;
+}
+
+.choice-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.choice-btn:active {
+  transform: scale(0.97);
+}
+
+.choice-btn.choice-a {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border-color: var(--color-choice-a);
+  color: #065f46;
+}
+
+.choice-btn.choice-a:hover {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  box-shadow: 0 4px 20px rgba(16,185,129,0.25);
+}
+
+.choice-btn.choice-b {
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border-color: var(--color-choice-b);
+  color: #7c2d12;
+}
+
+.choice-btn.choice-b:hover {
+  background: linear-gradient(135deg, #ffedd5, #fed7aa);
+  box-shadow: 0 4px 20px rgba(249,115,22,0.25);
+}
+
+.choice-letter {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  color: white;
+}
+
+.choice-a .choice-letter { background: var(--color-choice-a); }
+.choice-b .choice-letter { background: var(--color-choice-b); }
+
+.choice-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+  margin-bottom: 2px;
+}
+
+.choice-text {
+  font-weight: 600;
+}
+
+.choices.disabled .choice-btn {
+  pointer-events: none;
+  opacity: 0.4;
+  filter: grayscale(0.5);
+}
+
+.choice-btn.selected {
+  opacity: 1 !important;
+  filter: none !important;
+  transform: scale(1.02);
+  box-shadow: 0 6px 28px rgba(0,0,0,0.15);
+}
+
+/* ═══════════════════════════════════════
+   VIDEO AREA
+   ═══════════════════════════════════════ */
+.video-area {
+  display: none;
+  margin-bottom: 16px;
+  animation: fadeSlideIn 0.4s ease-out;
+}
+
+.video-area.visible {
+  display: block;
+}
+
+.video-container {
+  background: #000;
+  border-radius: var(--radius);
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+
+.video-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-placeholder {
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  padding: 20px;
+}
+
+.video-placeholder .play-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.video-placeholder .vid-name {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.7;
+  word-break: break-all;
+}
+
+.video-outcome-label {
+  text-align: center;
+  padding: 10px;
+  border-radius: 0 0 var(--radius) var(--radius);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+
+.video-outcome-label.outcome-a {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+}
+
+.video-outcome-label.outcome-b {
+  background: linear-gradient(135deg, #ffedd5, #fed7aa);
+  color: #7c2d12;
+}
+
+/* ═══════════════════════════════════════
+   MICRO-MISSION
+   ═══════════════════════════════════════ */
+.micro-mission {
+  display: none;
+  animation: fadeSlideIn 0.4s ease-out 0.2s both;
+}
+
+.micro-mission.visible {
+  display: block;
+}
+
+.mission-card {
+  background: linear-gradient(135deg, #faf5ff, #ede9fe);
+  border: 2px solid rgba(139,92,246,0.2);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  margin-bottom: 16px;
+}
+
+.mission-card .card-title {
+  color: var(--color-balance);
+}
+
+.mission-steps {
+  list-style: none;
+  counter-reset: mission;
+}
+
+.mission-steps li {
+  counter-increment: mission;
+  padding: 8px 0 8px 36px;
+  position: relative;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.mission-steps li::before {
+  content: counter(mission);
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-balance);
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mission-text {
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.mission-text p {
+  margin-bottom: 12px;
+}
+
+.mission-examples {
+  background: rgba(139,92,246,0.08);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+.mission-examples strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-balance);
+}
+
+.extra-b-note {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(249,115,22,0.1);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: #7c2d12;
+  font-weight: 600;
+}
+
+.extra-b-note.visible {
+  display: block;
+}
+
+/* ═══════════════════════════════════════
+   PASSPORT CODE
+   ═══════════════════════════════════════ */
+.passport-code {
+  display: none;
+  animation: fadeSlideIn 0.4s ease-out 0.3s both;
+}
+
+.passport-code.visible {
+  display: block;
+}
+
+.passport-card {
+  background: linear-gradient(135deg, #fefce8, #fef9c3);
+  border: 2px dashed #ca8a04;
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.passport-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #92400e;
+  margin-bottom: 8px;
+}
+
+.passport-word {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 800;
+  color: #78350f;
+  letter-spacing: 4px;
+}
+
+/* ═══════════════════════════════════════
+   NEXT LOCATION BUTTON
+   ═══════════════════════════════════════ */
+.next-location {
+  display: none;
+  animation: fadeSlideIn 0.4s ease-out 0.4s both;
+}
+
+.next-location.visible {
+  display: block;
+}
+
+.next-btn {
+  display: block;
+  width: 100%;
+  padding: 20px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 17px;
+  font-weight: 700;
+  color: white;
+  text-align: center;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.next-btn:active {
+  transform: scale(0.97);
+}
+
+.next-btn .next-label {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.next-btn .next-place {
+  font-size: 20px;
+}
+
+.next-btn .arrow {
+  display: block;
+  margin-top: 6px;
+  font-size: 20px;
+}
+
+/* Station-specific next button colors */
+.next-btn[data-next="1"] { background: linear-gradient(135deg, var(--color-focus), #4f46e5); }
+.next-btn[data-next="2"] { background: linear-gradient(135deg, var(--color-connect), #059669); }
+.next-btn[data-next="3"] { background: linear-gradient(135deg, var(--color-plan), #d97706); }
+.next-btn[data-next="4"] { background: linear-gradient(135deg, var(--color-eyes), #0891b2); }
+.next-btn[data-next="5"] { background: linear-gradient(135deg, var(--color-balance), #7c3aed); }
+.next-btn[data-next="finish"] { background: linear-gradient(135deg, #10b981, #6366f1); }
+
+.next-btn:hover {
+  box-shadow: 0 6px 28px rgba(0,0,0,0.25);
+  transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════
+   FOOTER LEGEND
+   ═══════════════════════════════════════ */
+.footer-legend {
+  text-align: center;
+  padding: 20px 16px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.35);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════
+   INTRO VIDEO BUTTON
+   ═══════════════════════════════════════ */
+.intro-video-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 2px solid rgba(99,102,241,0.3);
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  color: var(--color-focus);
+  font-family: var(--font-main);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-bottom: 16px;
+}
+
+.intro-video-btn:hover {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  box-shadow: 0 4px 16px rgba(99,102,241,0.2);
+}
+
+.intro-video-btn:active {
+  transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════
+   FINISH SCREEN EXTRAS
+   ═══════════════════════════════════════ */
+.finish-celebration {
+  text-align: center;
+  padding: 30px 20px;
+  animation: fadeSlideIn 0.6s ease-out;
+}
+
+.finish-celebration .big-check {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 16px;
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.finish-message {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+
+.finish-sub {
+  font-size: 15px;
+  color: rgba(255,255,255,0.6);
+}
+
+/* ═══════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════ */
+@media (max-width: 380px) {
+  .station-title { font-size: 22px; }
+  .meter-segment { font-size: 9px; padding: 6px 2px; }
+  .choice-btn { padding: 14px; font-size: 15px; }
+  .passport-word { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     STATION 0 — MAIN HALL (START)
+     ═══════════════════════════════════════════════ -->
+<div class="station" id="station-0" data-station="0">
+  <div class="balance-meter">
+    <div class="meter-segment" data-meter="focus">Focus</div>
+    <div class="meter-segment" data-meter="connect">Connect</div>
+    <div class="meter-segment" data-meter="plan">Plan</div>
+    <div class="meter-segment" data-meter="eyes">Eyes</div>
+    <div class="meter-segment" data-meter="balance">Balance</div>
+  </div>
+
+  <div class="station-header">
+    <div class="station-badge" style="background: var(--color-start);">Start</div>
+    <div class="station-title">Nova Needs Your Help</div>
+    <div class="station-location"><span class="pin">📍</span> Main Hall</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📖</span> The Story</div>
+    <div class="story-text">
+      <p>Welcome to <strong>Balance Quest</strong>.</p>
+      <p>The school's Balance Meter is flashing red. <strong>Notif the Gremlin</strong> is sneaking through the school, trying to steal everyone's attention and throw screen habits out of balance.</p>
+      <p>Today, you will follow <strong>Nova</strong> through 5 stations. At each station, Nova will run into a different screen-time problem.</p>
+      <p>Your job is to help Nova choose what to do:</p>
+      <p><strong style="color: var(--color-choice-a);">A = balanced choice</strong><br>
+      <strong style="color: var(--color-choice-b);">B = unhelpful choice</strong></p>
+      <p>After each choice: watch the 5-second outcome video, complete the micro-mission, collect the passport code, and move to the next station.</p>
+      <p>If Nova makes an unhelpful choice, don't worry. You can still help Nova reset and get back on track.</p>
+      <div class="say-together">
+        Say together:<br>
+        "Screens are a tool. We choose when to use them."
+      </div>
+    </div>
+  </div>
+
+  <button class="intro-video-btn" onclick="playIntroVideo()">
+    <span style="font-size:24px;">▶️</span> Play Intro Video
+  </button>
+
+  <div class="video-area" id="intro-video-area">
+    <div class="video-container">
+      <video controls playsinline>
+        <source src="videos/VID-00_NOVA_Intro.mp4" type="video/mp4">
+      </video>
+      <div class="video-placeholder" id="intro-placeholder">
+        <span class="play-icon">🎬</span>
+        <span class="vid-name">VID-00_NOVA_Intro.mp4</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="passport-card">
+    <div class="passport-label">Passport Code</div>
+    <div class="passport-word">START</div>
+  </div>
+
+  <div class="next-location visible">
+    <button class="next-btn" data-next="1" onclick="goToStation(1)">
+      <span class="next-label">Next Location</span>
+      <span class="next-place">📍 Bubble Wall</span>
+      <span class="arrow">→</span>
+    </button>
+  </div>
+
+  <div class="footer-legend">Your choice changes the outcome video, but the journey stays the same.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     STATION 1 — BUBBLE WALL
+     ═══════════════════════════════════════════════ -->
+<div class="station" id="station-1" data-station="1">
+  <div class="balance-meter">
+    <div class="meter-segment current" data-meter="focus">Focus</div>
+    <div class="meter-segment" data-meter="connect">Connect</div>
+    <div class="meter-segment" data-meter="plan">Plan</div>
+    <div class="meter-segment" data-meter="eyes">Eyes</div>
+    <div class="meter-segment" data-meter="balance">Balance</div>
+  </div>
+
+  <div class="station-header">
+    <div class="station-badge" style="background: var(--color-focus);">Station 1</div>
+    <div class="station-title">The Notification Trap</div>
+    <div class="station-location"><span class="pin">📍</span> Bubble Wall</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📖</span> The Story</div>
+    <div class="story-text">
+      <p>Nova hears buzzing, pinging, and popping everywhere. Notif has filled the Bubble Wall with distractions.</p>
+      <p>Nova is trying to focus, but the notifications keep pulling attention away.</p>
+      <p><strong>What should Nova do?</strong></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🤔</span> Make Your Choice</div>
+    <div class="choices" id="choices-1">
+      <button class="choice-btn choice-a" onclick="makeChoice(1, 'a')">
+        <span class="choice-letter">A</span>
+        <div>
+          <div class="choice-label">Balanced</div>
+          <div class="choice-text">Mute distractions and put the device face down</div>
+        </div>
+      </button>
+      <button class="choice-btn choice-b" onclick="makeChoice(1, 'b')">
+        <span class="choice-letter">B</span>
+        <div>
+          <div class="choice-label">Unhelpful</div>
+          <div class="choice-text">Tap every ping and chase every pop-up</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div class="video-area" id="video-1">
+    <div class="video-container">
+      <video controls playsinline id="video-player-1">
+        <source id="video-src-1" src="" type="video/mp4">
+      </video>
+    </div>
+    <div class="video-outcome-label" id="video-label-1"></div>
+  </div>
+
+  <div class="micro-mission" id="mission-1">
+    <div class="mission-card">
+      <div class="card-title"><span class="icon">🎯</span> Micro-Mission: Focus Reset</div>
+      <ol class="mission-steps">
+        <li>Take 3 slow breaths</li>
+        <li>Name 3 quiet things you can see</li>
+        <li>Whisper: "I'm the boss of my attention."</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="passport-code" id="passport-1">
+    <div class="passport-card">
+      <div class="passport-label">Passport Code</div>
+      <div class="passport-word">FOCUS</div>
+    </div>
+  </div>
+
+  <div class="next-location" id="next-1">
+    <button class="next-btn" data-next="2" onclick="goToStation(2)">
+      <span class="next-label">Next Location</span>
+      <span class="next-place">📍 Green Carpet</span>
+      <span class="arrow">→</span>
+    </button>
+  </div>
+
+  <div class="footer-legend">Your choice changes the outcome video, but the journey stays the same.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     STATION 2 — GREEN CARPET
+     ═══════════════════════════════════════════════ -->
+<div class="station" id="station-2" data-station="2">
+  <div class="balance-meter">
+    <div class="meter-segment completed" data-meter="focus">Focus</div>
+    <div class="meter-segment current" data-meter="connect">Connect</div>
+    <div class="meter-segment" data-meter="plan">Plan</div>
+    <div class="meter-segment" data-meter="eyes">Eyes</div>
+    <div class="meter-segment" data-meter="balance">Balance</div>
+  </div>
+
+  <div class="station-header">
+    <div class="station-badge" style="background: var(--color-connect);">Station 2</div>
+    <div class="station-title">Scroll or Connect?</div>
+    <div class="station-location"><span class="pin">📍</span> Green Carpet</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📖</span> The Story</div>
+    <div class="story-text">
+      <p>Nova arrives at the Green Carpet and spots someone nearby ready to talk.</p>
+      <p>But Notif projects an endless feed in front of Nova and whispers:</p>
+      <div class="gremlin-speech">"Just one more scroll..."</div>
+      <p>Nova has a choice to make.</p>
+      <p><strong>What should Nova do?</strong></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🤔</span> Make Your Choice</div>
+    <div class="choices" id="choices-2">
+      <button class="choice-btn choice-a" onclick="makeChoice(2, 'a')">
+        <span class="choice-letter">A</span>
+        <div>
+          <div class="choice-label">Balanced</div>
+          <div class="choice-text">Put the screen aside and connect with people nearby</div>
+        </div>
+      </button>
+      <button class="choice-btn choice-b" onclick="makeChoice(2, 'b')">
+        <span class="choice-letter">B</span>
+        <div>
+          <div class="choice-label">Unhelpful</div>
+          <div class="choice-text">Keep scrolling and ignore the people around</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div class="video-area" id="video-2">
+    <div class="video-container">
+      <video controls playsinline id="video-player-2">
+        <source id="video-src-2" src="" type="video/mp4">
+      </video>
+    </div>
+    <div class="video-outcome-label" id="video-label-2"></div>
+  </div>
+
+  <div class="micro-mission" id="mission-2">
+    <div class="mission-card">
+      <div class="card-title"><span class="icon">🎯</span> Micro-Mission: Reconnect</div>
+      <div class="mission-text">
+        <p>Say one kind sentence to a teammate.</p>
+        <div class="mission-examples">
+          <strong>Examples:</strong>
+          "You're a good partner."<br>
+          "Thanks for helping."<br>
+          "I like how you joined in."
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="passport-code" id="passport-2">
+    <div class="passport-card">
+      <div class="passport-label">Passport Code</div>
+      <div class="passport-word">CONNECT</div>
+    </div>
+  </div>
+
+  <div class="next-location" id="next-2">
+    <button class="next-btn" data-next="3" onclick="goToStation(3)">
+      <span class="next-label">Next Location</span>
+      <span class="next-place">📍 Bus Bay</span>
+      <span class="arrow">→</span>
+    </button>
+  </div>
+
+  <div class="footer-legend">Your choice changes the outcome video, but the journey stays the same.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     STATION 3 — BUS BAY
+     ═══════════════════════════════════════════════ -->
+<div class="station" id="station-3" data-station="3">
+  <div class="balance-meter">
+    <div class="meter-segment completed" data-meter="focus">Focus</div>
+    <div class="meter-segment completed" data-meter="connect">Connect</div>
+    <div class="meter-segment current" data-meter="plan">Plan</div>
+    <div class="meter-segment" data-meter="eyes">Eyes</div>
+    <div class="meter-segment" data-meter="balance">Balance</div>
+  </div>
+
+  <div class="station-header">
+    <div class="station-badge" style="background: var(--color-plan);">Station 3</div>
+    <div class="station-title">The No-Plan Problem</div>
+    <div class="station-location"><span class="pin">📍</span> Bus Bay</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📖</span> The Story</div>
+    <div class="story-text">
+      <p>Nova is enjoying screen time, but Notif grins and says:</p>
+      <div class="gremlin-speech">"Don't make a plan. Just keep going forever."</div>
+      <p>Without a plan, time can slip away before Nova even notices.</p>
+      <p><strong>What should Nova do?</strong></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🤔</span> Make Your Choice</div>
+    <div class="choices" id="choices-3">
+      <button class="choice-btn choice-a" onclick="makeChoice(3, 'a')">
+        <span class="choice-letter">A</span>
+        <div>
+          <div class="choice-label">Balanced</div>
+          <div class="choice-text">Make a plan for when, why, and how long to use screens</div>
+        </div>
+      </button>
+      <button class="choice-btn choice-b" onclick="makeChoice(3, 'b')">
+        <span class="choice-letter">B</span>
+        <div>
+          <div class="choice-label">Unhelpful</div>
+          <div class="choice-text">Start using the screen with no plan at all</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div class="video-area" id="video-3">
+    <div class="video-container">
+      <video controls playsinline id="video-player-3">
+        <source id="video-src-3" src="" type="video/mp4">
+      </video>
+    </div>
+    <div class="video-outcome-label" id="video-label-3"></div>
+  </div>
+
+  <div class="micro-mission" id="mission-3">
+    <div class="mission-card">
+      <div class="card-title"><span class="icon">🎯</span> Micro-Mission: Plan It</div>
+      <div class="mission-text">
+        <p>Write one line in your passport:</p>
+        <p><strong>"I will use screens for ____ then I will ____."</strong></p>
+        <div class="mission-examples">
+          <strong>Examples:</strong>
+          homework → play outside<br>
+          game → snack<br>
+          video → drawing
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="passport-code" id="passport-3">
+    <div class="passport-card">
+      <div class="passport-label">Passport Code</div>
+      <div class="passport-word">PLAN</div>
+    </div>
+  </div>
+
+  <div class="next-location" id="next-3">
+    <button class="next-btn" data-next="4" onclick="goToStation(4)">
+      <span class="next-label">Next Location</span>
+      <span class="next-place">📍 Reception Area</span>
+      <span class="arrow">→</span>
+    </button>
+  </div>
+
+  <div class="footer-legend">Your choice changes the outcome video, but the journey stays the same.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     STATION 4 — RECEPTION AREA
+     ═══════════════════════════════════════════════ -->
+<div class="station" id="station-4" data-station="4">
+  <div class="balance-meter">
+    <div class="meter-segment completed" data-meter="focus">Focus</div>
+    <div class="meter-segment completed" data-meter="connect">Connect</div>
+    <div class="meter-segment completed" data-meter="plan">Plan</div>
+    <div class="meter-segment current" data-meter="eyes">Eyes</div>
+    <div class="meter-segment" data-meter="balance">Balance</div>
+  </div>
+
+  <div class="station-header">
+    <div class="station-badge" style="background: var(--color-eyes);">Station 4</div>
+    <div class="station-title">The Eye Break Shield</div>
+    <div class="station-location"><span class="pin">📍</span> Reception Area</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📖</span> The Story</div>
+    <div class="story-text">
+      <p>Nova has been looking at a screen for a while. Notif wants Nova to keep staring and forget to rest.</p>
+      <p>But Nova remembers that eye breaks help restore balance.</p>
+      <p><strong>What should Nova do?</strong></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🤔</span> Make Your Choice</div>
+    <div class="choices" id="choices-4">
+      <button class="choice-btn choice-a" onclick="makeChoice(4, 'a')">
+        <span class="choice-letter">A</span>
+        <div>
+          <div class="choice-label">Balanced</div>
+          <div class="choice-text">Take an eye break and look into the distance</div>
+        </div>
+      </button>
+      <button class="choice-btn choice-b" onclick="makeChoice(4, 'b')">
+        <span class="choice-letter">B</span>
+        <div>
+          <div class="choice-label">Unhelpful</div>
+          <div class="choice-text">Keep staring at the screen without a break</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div class="video-area" id="video-4">
+    <div class="video-container">
+      <video controls playsinline id="video-player-4">
+        <source id="video-src-4" src="" type="video/mp4">
+      </video>
+    </div>
+    <div class="video-outcome-label" id="video-label-4"></div>
+  </div>
+
+  <div class="micro-mission" id="mission-4">
+    <div class="mission-card">
+      <div class="card-title"><span class="icon">🎯</span> Micro-Mission: Eye Break Shield</div>
+      <div class="mission-text">
+        <p>Look at something far away for 20 seconds. Then do it one more time.</p>
+        <div class="extra-b-note" id="extra-b-4">If you chose B, add 3 slow breaths first.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="passport-code" id="passport-4">
+    <div class="passport-card">
+      <div class="passport-label">Passport Code</div>
+      <div class="passport-word">EYES</div>
+    </div>
+  </div>
+
+  <div class="next-location" id="next-4">
+    <button class="next-btn" data-next="5" onclick="goToStation(5)">
+      <span class="next-label">Next Location</span>
+      <span class="next-place">📍 New Gym</span>
+      <span class="arrow">→</span>
+    </button>
+  </div>
+
+  <div class="footer-legend">Your choice changes the outcome video, but the journey stays the same.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     STATION 5 — NEW GYM (FINISH)
+     ═══════════════════════════════════════════════ -->
+<div class="station" id="station-5" data-station="5">
+  <div class="balance-meter">
+    <div class="meter-segment completed" data-meter="focus">Focus</div>
+    <div class="meter-segment completed" data-meter="connect">Connect</div>
+    <div class="meter-segment completed" data-meter="plan">Plan</div>
+    <div class="meter-segment completed" data-meter="eyes">Eyes</div>
+    <div class="meter-segment current" data-meter="balance">Balance</div>
+  </div>
+
+  <div class="station-header">
+    <div class="station-badge" style="background: var(--color-balance);">Final Station</div>
+    <div class="station-title">Who's in Control?</div>
+    <div class="station-location"><span class="pin">📍</span> New Gym</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">📖</span> The Story</div>
+    <div class="story-text">
+      <p>Nova reaches the final station. The Balance Meter is almost fixed.</p>
+      <p>Notif appears one last time and offers a trap:</p>
+      <div class="gremlin-speech">"Unlimited time. No limits. No stopping."</div>
+      <p>Nova must make the final decision.</p>
+      <p><strong>What should Nova do?</strong></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">🤔</span> Make Your Choice</div>
+    <div class="choices" id="choices-5">
+      <button class="choice-btn choice-a" onclick="makeChoice(5, 'a')">
+        <span class="choice-letter">A</span>
+        <div>
+          <div class="choice-label">Balanced</div>
+          <div class="choice-text">Use limits and choose screen-free times</div>
+        </div>
+      </button>
+      <button class="choice-btn choice-b" onclick="makeChoice(5, 'b')">
+        <span class="choice-letter">B</span>
+        <div>
+          <div class="choice-label">Unhelpful</div>
+          <div class="choice-text">Keep scrolling late and ignore limits</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div class="video-area" id="video-5">
+    <div class="video-container">
+      <video controls playsinline id="video-player-5">
+        <source id="video-src-5" src="" type="video/mp4">
+      </video>
+    </div>
+    <div class="video-outcome-label" id="video-label-5"></div>
+  </div>
+
+  <div class="micro-mission" id="mission-5">
+    <div class="mission-card">
+      <div class="card-title"><span class="icon">🎯</span> Micro-Mission: Take Back Control</div>
+      <div class="mission-text">
+        <p>Complete both:</p>
+        <p><strong>One screen habit I will TRY this week:</strong> ______</p>
+        <p><strong>One offline thing I will DO instead:</strong> ______</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="passport-code" id="passport-5">
+    <div class="passport-card">
+      <div class="passport-label">Passport Code</div>
+      <div class="passport-word">BALANCE</div>
+    </div>
+  </div>
+
+  <div class="next-location" id="next-5">
+    <button class="next-btn" data-next="finish" onclick="showFinish()">
+      <span class="next-label">Quest Complete!</span>
+      <span class="next-place">Return to class for share</span>
+      <span class="arrow">🏆</span>
+    </button>
+  </div>
+
+  <div class="footer-legend">Your choice changes the outcome video, but the journey stays the same.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     FINISH SCREEN
+     ═══════════════════════════════════════════════ -->
+<div class="station" id="station-finish" data-station="finish">
+  <div class="balance-meter">
+    <div class="meter-segment completed" data-meter="focus">Focus</div>
+    <div class="meter-segment completed" data-meter="connect">Connect</div>
+    <div class="meter-segment completed" data-meter="plan">Plan</div>
+    <div class="meter-segment completed" data-meter="eyes">Eyes</div>
+    <div class="meter-segment completed" data-meter="balance">Balance</div>
+  </div>
+
+  <div class="finish-celebration">
+    <span class="big-check">🏆</span>
+    <div class="finish-message">Balance Meter Restored!</div>
+    <div class="finish-sub">Nova is back in control. Great work!</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">💬</span> Talk About It</div>
+    <div class="story-text">
+      <p><strong>Questions to discuss:</strong></p>
+      <p>What was the hardest choice Nova had to make?</p>
+      <p>Which station felt most realistic?</p>
+      <p>What happens when notifications control us?</p>
+      <p>Why is having a plan helpful?</p>
+      <p>Why do eye breaks matter?</p>
+      <p>What is one balanced screen habit you could try this week?</p>
+      <p>What is one offline activity that helps you feel good?</p>
+    </div>
+  </div>
+
+  <div class="passport-card" style="margin-top: 16px;">
+    <div class="passport-label">Your Passport Codes</div>
+    <div class="passport-word" style="font-size: 18px; letter-spacing: 2px; line-height: 1.8;">
+      START · FOCUS · CONNECT<br>PLAN · EYES · BALANCE
+    </div>
+  </div>
+
+  <div class="say-together" style="margin: 16px 0; background: linear-gradient(135deg, #eff6ff, #ede9fe); border-radius: var(--radius); padding: 20px; border: 2px dashed rgba(99,102,241,0.3);">
+    Say together:<br>
+    "Screens are a tool. We choose when to use them."
+  </div>
+
+  <div class="footer-legend">Well done! You helped Nova complete Balance Quest.</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// VIDEO FILES MAP
+// ═══════════════════════════════════════
+const videoFiles = {
+  '1-a': 'videos/VID-01-A_Focus.mp4',
+  '1-b': 'videos/VID-01-B_Pings.mp4',
+  '2-a': 'videos/VID-02-A_Connect.mp4',
+  '2-b': 'videos/VID-02-B_Scroll.mp4',
+  '3-a': 'videos/VID-03-A_Plan.mp4',
+  '3-b': 'videos/VID-03-B_NoPlan.mp4',
+  '4-a': 'videos/VID-04-A_Eyes.mp4',
+  '4-b': 'videos/VID-04-B_NoBreaks.mp4',
+  '5-a': 'videos/VID-05-A_Balance.mp4',
+  '5-b': 'videos/VID-05-B_LateScroll.mp4',
+};
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function goToStation(num) {
+  window.location.hash = 'station-' + num;
+}
+
+function showFinish() {
+  window.location.hash = 'station-finish';
+}
+
+function showStation(id) {
+  document.querySelectorAll('.station').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) {
+    target.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+}
+
+function handleHash() {
+  const hash = window.location.hash.replace('#', '') || 'station-0';
+  showStation(hash);
+}
+
+window.addEventListener('hashchange', handleHash);
+window.addEventListener('DOMContentLoaded', handleHash);
+
+// ═══════════════════════════════════════
+// INTRO VIDEO
+// ═══════════════════════════════════════
+function playIntroVideo() {
+  const area = document.getElementById('intro-video-area');
+  area.classList.add('visible');
+  const video = area.querySelector('video');
+  const placeholder = document.getElementById('intro-placeholder');
+
+  video.addEventListener('canplay', function() {
+    placeholder.style.display = 'none';
+  }, { once: true });
+
+  video.addEventListener('error', function() {
+    placeholder.style.display = 'flex';
+  });
+
+  video.load();
+  video.play().catch(() => {});
+
+  area.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ═══════════════════════════════════════
+// CHOICE HANDLING
+// ═══════════════════════════════════════
+function makeChoice(station, choice) {
+  const choicesContainer = document.getElementById('choices-' + station);
+  const buttons = choicesContainer.querySelectorAll('.choice-btn');
+
+  // Disable choices and highlight selected
+  choicesContainer.classList.add('disabled');
+  buttons.forEach(btn => {
+    if (btn.classList.contains('choice-' + choice)) {
+      btn.classList.add('selected');
+    }
+  });
+
+  // Show video
+  const videoArea = document.getElementById('video-' + station);
+  const videoPlayer = document.getElementById('video-player-' + station);
+  const videoSrc = document.getElementById('video-src-' + station);
+  const videoLabel = document.getElementById('video-label-' + station);
+
+  const key = station + '-' + choice;
+  videoSrc.src = videoFiles[key];
+  videoPlayer.load();
+
+  if (choice === 'a') {
+    videoLabel.textContent = '✓ Balanced outcome';
+    videoLabel.className = 'video-outcome-label outcome-a';
+  } else {
+    videoLabel.textContent = '✗ Unhelpful outcome — but you can still help Nova reset!';
+    videoLabel.className = 'video-outcome-label outcome-b';
+  }
+
+  videoArea.classList.add('visible');
+  videoPlayer.play().catch(() => {});
+
+  // Show micro-mission
+  const mission = document.getElementById('mission-' + station);
+  mission.classList.add('visible');
+
+  // Show extra B note for station 4
+  if (station === 4 && choice === 'b') {
+    const extraNote = document.getElementById('extra-b-4');
+    if (extraNote) extraNote.classList.add('visible');
+  }
+
+  // Show passport code
+  const passport = document.getElementById('passport-' + station);
+  passport.classList.add('visible');
+
+  // Show next location
+  const next = document.getElementById('next-' + station);
+  next.classList.add('visible');
+
+  // Scroll to video
+  setTimeout(() => {
+    videoArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+</script>
+</body>
+</html>
