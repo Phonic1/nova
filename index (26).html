@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Balance Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --crimson: #B5243E;
+    --crimson-light: #D94460;
+    --orange: #E07830;
+    --amber: #E8A832;
+    --gold: #F0C040;
+    --teal: #1E7A5E;
+    --teal-light: #2A9E78;
+    --purple: #7B3F8E;
+    --purple-light: #9A5CB0;
+    --maroon: #7A2E3A;
+    --brown: #5C3328;
+    --bg-cream: #FFF8F0;
+    --bg-warm: #FEF0E4;
+    --bg-card: #FFFFFF;
+    --text-dark: #3D2020;
+    --text-body: #5A3A36;
+    --text-muted: #9A7A72;
+    --radius: 20px;
+    --shadow-soft: 0 2px 16px rgba(90,42,30,0.08);
+    --shadow-lift: 0 4px 24px rgba(90,42,30,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg-cream);
+    color: var(--text-body);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bg-pattern {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 700px 500px at 15% 10%, rgba(224,120,48,0.08), transparent),
+      radial-gradient(ellipse 500px 500px at 85% 85%, rgba(30,122,94,0.06), transparent),
+      radial-gradient(ellipse 400px 350px at 50% 50%, rgba(181,36,62,0.04), transparent);
+  }
+  .bg-dots {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.025;
+    background-image: radial-gradient(circle 1.5px, var(--maroon) 100%, transparent 100%);
+    background-size: 32px 32px;
+  }
+  .app {
+    position: relative; z-index: 1;
+    max-width: 520px; margin: 0 auto;
+    padding: 24px 20px 40px;
+    min-height: 100dvh;
+    display: flex; flex-direction: column;
+  }
+  .meter-bar {
+    display: flex; gap: 6px; margin-bottom: 28px;
+    padding: 14px 12px; border-radius: 16px;
+    background: var(--bg-card);
+    border: 1.5px solid rgba(181,36,62,0.1);
+    box-shadow: var(--shadow-soft);
+  }
+  .meter-segment {
+    flex: 1; text-align: center; padding: 8px 4px;
+    border-radius: 10px; font-size: 10px; font-weight: 700;
+    font-family: 'Fredoka', sans-serif;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    background: rgba(154,122,114,0.08);
+    color: var(--text-muted);
+    transition: all 0.5s ease;
+  }
+  .meter-segment.restored {
+    background: linear-gradient(135deg, rgba(30,122,94,0.18), rgba(42,158,120,0.1));
+    color: var(--teal);
+  }
+  .meter-segment.active {
+    background: linear-gradient(135deg, rgba(232,168,50,0.25), rgba(224,120,48,0.15));
+    color: var(--orange);
+    animation: pulse-segment 2s ease-in-out infinite;
+  }
+  @keyframes pulse-segment {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .meter-segment .seg-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+  .station-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 100px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 16px; align-self: flex-start;
+  }
+  .hero-card {
+    border-radius: var(--radius);
+    padding: 28px 22px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-soft);
+    border: 1.5px solid rgba(181,36,62,0.08);
+  }
+  .hero-title {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 26px; font-weight: 700;
+    line-height: 1.2; margin-bottom: 14px;
+    color: var(--text-dark);
+  }
+  .hero-text { font-size: 17px; line-height: 1.65; }
+  .hero-text strong { color: var(--crimson); font-weight: 700; }
+  .video-placeholder {
+    border-radius: var(--radius); aspect-ratio: 16/9;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px; margin-bottom: 24px;
+    border: 2.5px dashed rgba(181,36,62,0.2);
+    background: rgba(254,240,228,0.6);
+    cursor: pointer; transition: border-color 0.3s, background 0.3s;
+  }
+  .video-placeholder:hover {
+    border-color: rgba(181,36,62,0.4);
+    background: rgba(254,240,228,0.9);
+  }
+  .video-placeholder .play-icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--crimson);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: #fff;
+    box-shadow: 0 4px 20px rgba(181,36,62,0.3);
+    transition: transform 0.2s;
+  }
+  .video-placeholder:hover .play-icon { transform: scale(1.1); }
+  .video-placeholder .vid-label {
+    font-size: 12px; color: var(--text-muted);
+    font-family: 'Fredoka', sans-serif;
+  }
+  .video-player {
+    width: 100%; border-radius: var(--radius);
+    margin-bottom: 24px; display: none; background: #000;
+  }
+  .video-player.visible { display: block; }
+  .image-placeholder {
+    border-radius: var(--radius); aspect-ratio: 4/3;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 24px;
+    border: 2.5px dashed rgba(123,63,142,0.2);
+    background: rgba(123,63,142,0.04);
+  }
+  .image-placeholder .img-icon { font-size: 40px; opacity: 0.5; }
+  .image-placeholder .img-label {
+    font-size: 12px; color: var(--text-muted);
+    font-family: 'Fredoka', sans-serif;
+  }
+  .gremlin-bubble {
+    background: linear-gradient(135deg, rgba(123,63,142,0.08), rgba(181,36,62,0.05));
+    border: 1.5px solid rgba(123,63,142,0.2);
+    border-radius: 18px; padding: 20px 22px;
+    margin-bottom: 24px; position: relative;
+    font-size: 17px; font-style: italic; color: var(--purple);
+  }
+  .gremlin-bubble::before {
+    content: '👾'; position: absolute;
+    top: -14px; left: 18px; font-size: 24px;
+    background: var(--bg-cream); padding: 0 6px; border-radius: 8px;
+  }
+  .gremlin-bubble .gremlin-name {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700; font-style: normal;
+    color: var(--purple); margin-bottom: 4px;
+    font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .choices { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+  .choice-btn {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 20px; border-radius: 16px;
+    border: 2px solid transparent;
+    background: var(--bg-card);
+    cursor: pointer; text-align: left;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.25s ease;
+    -webkit-user-select: none; user-select: none;
+  }
+  .choice-btn:active { transform: scale(0.97); }
+  .choice-btn .choice-letter {
+    flex-shrink: 0; width: 44px; height: 44px;
+    border-radius: 12px; display: flex;
+    align-items: center; justify-content: center;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 20px; font-weight: 700;
+  }
+  .choice-btn .choice-label {
+    font-size: 13px; font-family: 'Fredoka', sans-serif;
+    font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .choice-btn .choice-desc { font-size: 16px; line-height: 1.5; }
+  .choice-btn.green { border-color: rgba(30,122,94,0.25); }
+  .choice-btn.green .choice-letter { background: rgba(30,122,94,0.12); color: var(--teal); }
+  .choice-btn.green .choice-label { color: var(--teal); }
+  .choice-btn.green:hover {
+    border-color: var(--teal);
+    box-shadow: 0 4px 24px rgba(30,122,94,0.15);
+  }
+  .choice-btn.pink { border-color: rgba(181,36,62,0.2); }
+  .choice-btn.pink .choice-letter { background: rgba(181,36,62,0.1); color: var(--crimson); }
+  .choice-btn.pink .choice-label { color: var(--crimson); }
+  .choice-btn.pink:hover {
+    border-color: var(--crimson);
+    box-shadow: 0 4px 24px rgba(181,36,62,0.12);
+  }
+  .outcome-panel {
+    border-radius: var(--radius); padding: 24px;
+    margin-bottom: 24px; display: none;
+    animation: fadeSlideUp 0.5s ease forwards;
+    box-shadow: var(--shadow-soft);
+  }
+  .outcome-panel.visible { display: block; }
+  .outcome-panel.outcome-good {
+    background: linear-gradient(135deg, rgba(30,122,94,0.1), rgba(42,158,120,0.04));
+    border: 1.5px solid rgba(30,122,94,0.2);
+  }
+  .outcome-panel.outcome-bad {
+    background: linear-gradient(135deg, rgba(181,36,62,0.08), rgba(224,120,48,0.04));
+    border: 1.5px solid rgba(181,36,62,0.2);
+  }
+  .outcome-panel h3 { font-family: 'Fredoka', sans-serif; font-size: 18px; margin-bottom: 10px; }
+  .outcome-good h3 { color: var(--teal); }
+  .outcome-bad h3 { color: var(--crimson); }
+  .outcome-panel p { font-size: 15px; line-height: 1.6; }
+  .mission-card {
+    border-radius: var(--radius); padding: 24px;
+    margin-bottom: 24px; background: var(--bg-card);
+    border: 1.5px solid rgba(224,120,48,0.2);
+    box-shadow: var(--shadow-soft); display: none;
+  }
+  .mission-card.visible { display: block; animation: fadeSlideUp 0.5s ease forwards; }
+  .mission-card .mission-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .mission-card .mission-icon { font-size: 28px; }
+  .mission-card .mission-title {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px; font-weight: 700; color: var(--orange);
+  }
+  .mission-card ol, .mission-card ul { padding-left: 20px; margin-bottom: 12px; }
+  .mission-card li { font-size: 16px; line-height: 1.7; margin-bottom: 4px; }
+  .mission-card .say-together {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 17px; font-weight: 600; color: var(--crimson);
+    text-align: center; padding: 16px;
+    background: rgba(181,36,62,0.06);
+    border-radius: 12px; margin-top: 10px;
+    border: 1px dashed rgba(181,36,62,0.2);
+  }
+  .passport-reveal {
+    text-align: center; padding: 28px;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, rgba(232,168,50,0.12), rgba(240,192,64,0.06));
+    border: 2px solid rgba(232,168,50,0.3);
+    margin-bottom: 24px; display: none;
+    box-shadow: var(--shadow-soft);
+  }
+  .passport-reveal.visible { display: block; animation: fadeSlideUp 0.5s ease forwards; }
+  .passport-reveal .passport-label {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--orange); margin-bottom: 8px;
+  }
+  .passport-reveal .passport-code {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 42px; font-weight: 700;
+    color: var(--maroon); letter-spacing: 6px;
+  }
+  .next-btn {
+    display: none; width: 100%; padding: 18px;
+    border-radius: 14px; border: none;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px; font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(30,122,94,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .next-btn.visible { display: block; animation: fadeSlideUp 0.5s ease forwards; }
+  .next-btn:active { transform: scale(0.97); }
+  .next-btn:hover { box-shadow: 0 6px 28px rgba(30,122,94,0.4); }
+  .intro-character { text-align: center; margin-bottom: 24px; }
+  .intro-character .char-avatar {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(30,122,94,0.15), rgba(232,168,50,0.12));
+    border: 3px solid var(--teal);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 56px; margin: 0 auto 14px;
+    animation: float 3s ease-in-out infinite;
+    box-shadow: 0 4px 20px rgba(30,122,94,0.15);
+  }
+  .intro-character .char-name {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 22px; font-weight: 700; color: var(--teal);
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .intro-vs { text-align: center; margin-bottom: 24px; }
+  .intro-vs .vs-text {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 16px; color: var(--text-muted); margin-bottom: 14px;
+  }
+  .intro-vs .villain-avatar {
+    width: 100px; height: 100px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(123,63,142,0.15), rgba(181,36,62,0.1));
+    border: 3px solid var(--purple);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px; margin: 0 auto 10px;
+    animation: wobble 2.5s ease-in-out infinite;
+    box-shadow: 0 4px 20px rgba(123,63,142,0.15);
+  }
+  .intro-vs .villain-name {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px; font-weight: 700; color: var(--purple);
+  }
+  @keyframes wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-3deg); }
+    75% { transform: rotate(3deg); }
+  }
+  .deco-strip {
+    display: flex; justify-content: center; gap: 12px;
+    font-size: 20px; margin-bottom: 20px; opacity: 0.5;
+    user-select: none;
+  }
+  .page-footer {
+    margin-top: auto; padding-top: 24px;
+    text-align: center; font-size: 12px;
+    color: var(--text-muted); opacity: 0.6;
+  }
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeSlideUp 0.6s ease forwards; }
+  .fade-in-d1 { animation: fadeSlideUp 0.6s ease 0.1s both; }
+  .fade-in-d2 { animation: fadeSlideUp 0.6s ease 0.2s both; }
+  .fade-in-d3 { animation: fadeSlideUp 0.6s ease 0.3s both; }
+  .fade-in-d4 { animation: fadeSlideUp 0.6s ease 0.4s both; }
+  .fade-in-d5 { animation: fadeSlideUp 0.6s ease 0.5s both; }
+  .completion-burst { text-align: center; padding: 40px 20px; }
+  .completion-burst .trophy { font-size: 72px; margin-bottom: 16px; }
+  .completion-burst h2 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 32px; color: var(--crimson); margin-bottom: 12px;
+  }
+  .completion-burst p { font-size: 17px; line-height: 1.6; }
+  .completion-codes {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    justify-content: center; margin: 24px 0;
+  }
+  .completion-codes span {
+    padding: 8px 16px; border-radius: 10px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 15px; font-weight: 700;
+    background: rgba(30,122,94,0.1);
+    color: var(--teal);
+    border: 1.5px solid rgba(30,122,94,0.2);
+  }
+  .write-field {
+    width: 100%; padding: 14px 16px;
+    border-radius: 12px;
+    border: 2px solid rgba(181,36,62,0.15);
+    background: var(--bg-warm); color: var(--text-dark);
+    font-family: 'Nunito', sans-serif; font-size: 16px;
+    outline: none; transition: border-color 0.3s;
+    margin-top: 8px; margin-bottom: 8px;
+  }
+  .write-field:focus { border-color: var(--orange); }
+  .write-field::placeholder { color: var(--text-muted); opacity: 0.6; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<div class="bg-dots"></div>
+<div class="app" id="app"></div>
+<script>
+const STATIONS=[{id:0,badge:{text:'Start',bg:'rgba(123,63,142,0.12)',color:'#7B3F8E',border:'rgba(123,63,142,0.3)'},location:'Main Hall',meterHighlight:-1,heroCard:{bg:'linear-gradient(135deg, rgba(123,63,142,0.07), rgba(30,122,94,0.05))',title:'Nova Needs Your Help',html:`<p class="hero-text">The school's <strong>Balance Meter</strong> is flashing red.<br><br><strong>Notif the Gremlin</strong> is sneaking through the school, trying to steal everyone's attention and throw screen habits out of balance.<br><br>Today, you will follow <strong>Nova</strong> through 5 stations. At each one, Nova will run into a different screen-time problem.<br><br>Help Nova choose what to do:</p>`},isIntro:true,introVideo:'videos/VID-00_NOVA_Intro.mp4',passportCode:'START',nextLabel:'Go to Bubble Wall →',nextStation:1},{id:1,badge:{text:'Station 1',bg:'rgba(224,120,48,0.12)',color:'#E07830',border:'rgba(224,120,48,0.3)'},location:'Bubble Wall',meterHighlight:0,heroCard:{bg:'linear-gradient(135deg, rgba(224,120,48,0.08), rgba(232,168,50,0.05))',title:'The Notification Trap',html:`<p class="hero-text">Nova hears buzzing, pinging, and popping everywhere. <strong>Notif</strong> has filled the Bubble Wall with distractions.<br><br>Nova is trying to focus, but the notifications keep pulling attention away.</p>`},sceneImage:'images/station-1-bubble-wall.png',gremlinSays:'"Just one more ping… and another… and another…"',choiceA:{label:'Balanced',desc:'Mute distractions and put the device face down',video:'videos/VID-01-A_Focus.mp4',outcome:'Nova muted the noise and found focus. The Balance Meter glows a little brighter!'},choiceB:{label:'Unhelpful',desc:'Tap every ping and chase every pop-up',video:'videos/VID-01-B_Pings.mp4',outcome:"Nova got lost chasing notifications and felt scattered. But it's not too late to reset!"},mission:{title:'Focus Reset',icon:'🧘',steps:['Take 3 slow breaths','Name 3 quiet things you can see','Whisper: <strong>"I\'m the boss of my attention."</strong>']},passportCode:'FOCUS',nextLabel:'Go to Green Carpet →',nextStation:2},{id:2,badge:{text:'Station 2',bg:'rgba(30,122,94,0.12)',color:'#1E7A5E',border:'rgba(30,122,94,0.3)'},location:'Green Carpet',meterHighlight:1,heroCard:{bg:'linear-gradient(135deg, rgba(30,122,94,0.08), rgba(232,168,50,0.04))',title:'Scroll or Connect?',html:`<p class="hero-text">Nova arrives at the Green Carpet and spots someone nearby ready to talk.<br><br>But <strong>Notif</strong> projects an endless feed in front of Nova…</p>`},sceneImage:'images/station-2-green-carpet.png',gremlinSays:'"Just one more scroll…"',choiceA:{label:'Balanced',desc:'Put the screen aside and connect with people nearby',video:'videos/VID-02-A_Connect.mp4',outcome:'Nova put the screen down and had a real conversation. Connection restored!'},choiceB:{label:'Unhelpful',desc:'Keep scrolling and ignore the people around',video:'videos/VID-02-B_Scroll.mp4',outcome:"Nova missed a chance to connect. But there's still time to make it right."},mission:{title:'Reconnect',icon:'💬',steps:['Say one kind sentence to a teammate:'],examples:['"You\'re a good partner."','"Thanks for helping."','"I like how you joined in."']},passportCode:'CONNECT',nextLabel:'Go to Bus Bay →',nextStation:3},{id:3,badge:{text:'Station 3',bg:'rgba(232,168,50,0.12)',color:'#B87A10',border:'rgba(232,168,50,0.3)'},location:'Bus Bay',meterHighlight:2,heroCard:{bg:'linear-gradient(135deg, rgba(232,168,50,0.1), rgba(224,120,48,0.06))',title:'The No-Plan Problem',html:`<p class="hero-text">Nova is enjoying screen time, but <strong>Notif</strong> grins…<br><br>Without a plan, time can slip away before Nova even notices.</p>`},sceneImage:'images/station-3-bus-bay.png',gremlinSays:'"Don\'t make a plan. Just keep going forever."',choiceA:{label:'Balanced',desc:'Make a plan for when, why, and how long to use screens',video:'videos/VID-03-A_Plan.mp4',outcome:'Nova made a plan and felt in control. Planning power restored!'},choiceB:{label:'Unhelpful',desc:'Start using the screen with no plan at all',video:'videos/VID-03-B_NoPlan.mp4',outcome:"Time slipped away without Nova noticing. Let's help Nova plan better."},mission:{title:'Plan It',icon:'📋',steps:['Write your plan below:'],writeIn:true,writeInPrompt:'"I will use screens for ____ then I will ____."',examples:['homework → play outside','game → snack','video → drawing']},passportCode:'PLAN',nextLabel:'Go to Reception Area →',nextStation:4},{id:4,badge:{text:'Station 4',bg:'rgba(181,36,62,0.1)',color:'#B5243E',border:'rgba(181,36,62,0.25)'},location:'Reception Area',meterHighlight:3,heroCard:{bg:'linear-gradient(135deg, rgba(181,36,62,0.07), rgba(123,63,142,0.04))',title:'The Eye Break Shield',html:`<p class="hero-text">Nova has been looking at a screen for a while. <strong>Notif</strong> wants Nova to keep staring and forget to rest.<br><br>But Nova remembers that eye breaks help restore balance.</p>`},sceneImage:'images/station-4-reception.png',gremlinSays:'"Don\'t look away… you might miss something!"',choiceA:{label:'Balanced',desc:'Take an eye break and look into the distance',video:'videos/VID-04-A_Eyes.mp4',outcome:"Nova's eyes feel refreshed! Eye health restored on the Balance Meter."},choiceB:{label:'Unhelpful',desc:'Keep staring at the screen without a break',video:'videos/VID-04-B_NoBreaks.mp4',outcome:"Nova's eyes feel tired and strained. Time for a recovery break!"},mission:{title:'Eye Break Shield',icon:'👁️',steps:['Look at something far away for 20 seconds','Then do it one more time','If you chose B, add 3 slow breaths first']},passportCode:'EYES',nextLabel:'Go to New Gym →',nextStation:5},{id:5,badge:{text:'Final Station',bg:'rgba(181,36,62,0.12)',color:'#7A2E3A',border:'rgba(181,36,62,0.3)'},location:'New Gym',meterHighlight:4,heroCard:{bg:'linear-gradient(135deg, rgba(181,36,62,0.08), rgba(232,168,50,0.06))',title:"Who's in Control?",html:`<p class="hero-text">Nova reaches the final station. The <strong>Balance Meter</strong> is almost fixed.<br><br><strong>Notif</strong> appears one last time with a trap…</p>`},sceneImage:'images/station-5-new-gym.png',gremlinSays:'"Unlimited time. No limits. No stopping."',choiceA:{label:'Balanced',desc:'Use limits and choose screen-free times',video:'videos/VID-05-A_Balance.mp4',outcome:'Nova chose balance! The Balance Meter is fully restored! 🎉'},choiceB:{label:'Unhelpful',desc:'Keep scrolling late and ignore limits',video:'videos/VID-05-B_LateScroll.mp4',outcome:'Notif almost won, but Nova can still take back control.'},mission:{title:'Take Back Control',icon:'🏆',steps:['Complete both prompts below:'],writeIn:true,writeInPrompt:'One screen habit I will TRY this week:',writeInPrompt2:'One offline thing I will DO instead:'},passportCode:'BALANCE',nextLabel:'See Your Results →',nextStation:'complete',isFinal:true}];
+
+const METER_SEGMENTS=[{label:'Focus',icon:'🎯'},{label:'Connect',icon:'🤝'},{label:'Plan',icon:'📋'},{label:'Eyes',icon:'👁️'},{label:'Balance',icon:'⚖️'}];
+const DECO=['🌿','❤️','🌎','🍃','💛','🌿'];
+
+function getStation(){const p=new URLSearchParams(location.search);const s=parseInt(p.get('station'),10);return isNaN(s)?0:Math.max(0,Math.min(s,5));}
+function getRestored(idx){const r=[];for(let i=0;i<idx;i++)r.push(i);return r;}
+
+function renderMeter(station,restored){
+  let h='<div class="meter-bar fade-in">';
+  METER_SEGMENTS.forEach((seg,i)=>{
+    let c='meter-segment';
+    if(restored.includes(i))c+=' restored';
+    else if(i===station.meterHighlight)c+=' active';
+    h+=`<div class="${c}"><span class="seg-icon">${seg.icon}</span>${seg.label}</div>`;
+  });
+  return h+'</div>';
+}
+
+function renderMission(m){
+  let h=`<div class="mission-header"><span class="mission-icon">${m.icon}</span><span class="mission-title">Micro-Mission: ${m.title}</span></div><ol>`;
+  m.steps.forEach(s=>h+=`<li>${s}</li>`);
+  h+='</ol>';
+  if(m.writeIn){
+    h+=`<p style="font-size:14px;color:var(--text-muted);margin-bottom:4px;">${m.writeInPrompt}</p>`;
+    h+=`<input type="text" class="write-field" placeholder="Type here…">`;
+    if(m.writeInPrompt2){
+      h+=`<p style="font-size:14px;color:var(--text-muted);margin-top:12px;margin-bottom:4px;">${m.writeInPrompt2}</p>`;
+      h+=`<input type="text" class="write-field" placeholder="Type here…">`;
+    }
+  }
+  if(m.examples){
+    h+='<p style="font-size:14px;color:var(--text-muted);margin-top:8px;">Examples:</p><ul>';
+    m.examples.forEach(e=>h+=`<li style="font-size:15px;">${e}</li>`);
+    h+='</ul>';
+  }
+  return `<div class="mission-card" id="mission">${h}</div>`;
+}
+
+function render(){
+  const idx=getStation();
+  const s=STATIONS[idx];
+  const app=document.getElementById('app');
+  const restored=getRestored(idx);
+
+  if(location.search.includes('complete')){
+    let h='<div class="meter-bar fade-in">';
+    METER_SEGMENTS.forEach(seg=>{h+=`<div class="meter-segment restored"><span class="seg-icon">${seg.icon}</span>${seg.label}</div>`;});
+    h+='</div>';
+    h+=`<div class="deco-strip fade-in">${DECO.join(' ')}</div>`;
+    h+=`<div class="completion-burst fade-in"><div class="trophy">🏆</div><h2>Quest Complete!</h2><p>Nova restored the Balance Meter — with your help!</p></div>`;
+    h+=`<div class="completion-codes fade-in-d2"><span>START</span><span>FOCUS</span><span>CONNECT</span><span>PLAN</span><span>EYES</span><span>BALANCE</span></div>`;
+    h+=`<div class="hero-card fade-in-d3" style="background:linear-gradient(135deg,rgba(30,122,94,0.08),rgba(232,168,50,0.05))"><h2 class="hero-title" style="text-align:center;">Debrief Time</h2><p class="hero-text" style="text-align:center;">Discuss with your class:<br><br><strong>Where did Nova make strong choices?</strong><br><strong>Where did Notif nearly win?</strong><br><strong>What would you do differently?</strong></p></div>`;
+    h+=`<div class="image-placeholder fade-in-d4"><div class="img-icon">🎉</div><div class="img-label">IMAGE: celebration.png</div></div>`;
+    h+=`<div class="page-footer">Balance Quest — Screens are a tool. We choose when to use them.</div>`;
+    app.innerHTML=h;window.scrollTo(0,0);return;
+  }
+
+  let html='';
+  html+=renderMeter(s,restored);
+  html+=`<div class="deco-strip fade-in">${DECO.join(' ')}</div>`;
+  html+=`<div class="station-badge fade-in-d1" style="background:${s.badge.bg};color:${s.badge.color};border:1.5px solid ${s.badge.border};">📍 ${s.badge.text} — ${s.location}</div>`;
+
+  if(s.isIntro){
+    html+=`<div class="intro-character fade-in-d2"><div class="char-avatar">🧑‍🚀</div><div class="char-name">Nova</div></div>`;
+    html+=`<div class="image-placeholder fade-in-d2"><div class="img-icon">🧑‍🚀</div><div class="img-label">IMAGE: nova-character.png</div></div>`;
+    html+=`<div class="intro-vs fade-in-d3"><div class="vs-text">— versus —</div><div class="villain-avatar">👾</div><div class="villain-name">Notif the Gremlin</div></div>`;
+    html+=`<div class="image-placeholder fade-in-d3"><div class="img-icon">👾</div><div class="img-label">IMAGE: notif-gremlin.png</div></div>`;
+    html+=`<div class="hero-card fade-in-d3" style="background:${s.heroCard.bg}"><h2 class="hero-title">${s.heroCard.title}</h2>${s.heroCard.html}</div>`;
+    html+=`<div class="video-placeholder fade-in-d4" onclick="playVideo(this,'${s.introVideo}')"><div class="play-icon">▶</div><div class="vid-label">VIDEO: VID-00_NOVA_Intro.mp4</div></div><video class="video-player" controls playsinline></video>`;
+    html+=`<div class="mission-card visible fade-in-d5"><div class="mission-header"><span class="mission-icon">🗣️</span><span class="mission-title">Say Together</span></div><div class="say-together">"Screens are a tool. We choose when to use them."</div></div>`;
+    html+=`<div class="passport-reveal visible" id="passport"><div class="passport-label">✦ Passport Code ✦</div><div class="passport-code">${s.passportCode}</div></div>`;
+    const href=`?station=${s.nextStation}`;
+    html+=`<button class="next-btn visible" onclick="location.href='${href}'">${s.nextLabel}</button>`;
+  } else {
+    html+=`<div class="hero-card fade-in-d2" style="background:${s.heroCard.bg}"><h2 class="hero-title">${s.heroCard.title}</h2>${s.heroCard.html}</div>`;
+    html+=`<div class="image-placeholder fade-in-d2"><div class="img-icon">🖼️</div><div class="img-label">IMAGE: ${s.sceneImage.split('/').pop()}</div></div>`;
+    if(s.gremlinSays) html+=`<div class="gremlin-bubble fade-in-d3"><div class="gremlin-name">Notif says:</div>${s.gremlinSays}</div>`;
+    html+=`<h3 class="fade-in-d3" style="font-family:'Fredoka',sans-serif;font-size:20px;margin-bottom:16px;color:var(--crimson);text-align:center;">What should Nova do?</h3>`;
+    html+=`<div class="choices fade-in-d4" id="choices"><button class="choice-btn green" onclick="makeChoice('A')"><div class="choice-letter">A</div><div class="choice-body"><div class="choice-label">${s.choiceA.label}</div><div class="choice-desc">${s.choiceA.desc}</div></div></button><button class="choice-btn pink" onclick="makeChoice('B')"><div class="choice-letter">B</div><div class="choice-body"><div class="choice-label">${s.choiceB.label}</div><div class="choice-desc">${s.choiceB.desc}</div></div></button></div>`;
+    html+=`<div class="outcome-panel outcome-good" id="outcome-good"><h3>✅ Great Choice!</h3><p>${s.choiceA.outcome}</p></div>`;
+    html+=`<div class="outcome-panel outcome-bad" id="outcome-bad"><h3>⚠️ Uh Oh!</h3><p>${s.choiceB.outcome}</p></div>`;
+    html+=`<div class="video-placeholder hidden" id="vid-placeholder-A" onclick="playVideo(this,'${s.choiceA.video}')"><div class="play-icon">▶</div><div class="vid-label">VIDEO: ${s.choiceA.video.split('/').pop()}</div></div><video class="video-player" controls playsinline></video>`;
+    html+=`<div class="video-placeholder hidden" id="vid-placeholder-B" onclick="playVideo(this,'${s.choiceB.video}')"><div class="play-icon">▶</div><div class="vid-label">VIDEO: ${s.choiceB.video.split('/').pop()}</div></div><video class="video-player" controls playsinline></video>`;
+    html+=renderMission(s.mission);
+    html+=`<div class="passport-reveal" id="passport"><div class="passport-label">✦ Passport Code ✦</div><div class="passport-code">${s.passportCode}</div></div>`;
+    const href2=s.nextStation==='complete'?'?station=5&complete':`?station=${s.nextStation}`;
+    html+=`<button class="next-btn" id="next-btn" onclick="location.href='${href2}'">${s.nextLabel}</button>`;
+  }
+
+  html+=`<div class="page-footer">Balance Quest — Your choice changes the outcome video, but the journey stays the same.</div>`;
+  app.innerHTML=html;window.scrollTo(0,0);
+}
+
+function makeChoice(choice){
+  const ch=document.getElementById('choices');
+  ch.style.opacity='0.35';ch.style.pointerEvents='none';
+  const good=document.getElementById('outcome-good');
+  const bad=document.getElementById('outcome-bad');
+  if(choice==='A'){good.classList.add('visible');document.getElementById('vid-placeholder-A').classList.remove('hidden');}
+  else{bad.classList.add('visible');document.getElementById('vid-placeholder-B').classList.remove('hidden');}
+  setTimeout(()=>document.getElementById('mission').classList.add('visible'),600);
+  setTimeout(()=>document.getElementById('passport').classList.add('visible'),1000);
+  setTimeout(()=>document.getElementById('next-btn').classList.add('visible'),1400);
+  setTimeout(()=>(choice==='A'?good:bad).scrollIntoView({behavior:'smooth',block:'center'}),100);
+}
+
+function playVideo(ph,src){
+  const v=ph.nextElementSibling;
+  if(v&&v.tagName==='VIDEO'){v.src=src;v.classList.add('visible');ph.style.display='none';v.play().catch(()=>{});}
+}
+
+render();
+</script>
+</body>
+</html>
