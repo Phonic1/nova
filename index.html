@@ -753,6 +753,8 @@ function render(){
     html+=`<h3 style="font-family:'Fredoka',sans-serif;font-size:20px;margin-bottom:16px;color:var(--crimson);text-align:center;">What should Nova do?</h3>`;
     html+=`<div class="choices" id="choices"><button class="choice-btn green" onclick="makeChoice('A')"><div class="choice-letter">A</div><div class="choice-body"><div class="choice-label">${s.choiceA.label}</div><div class="choice-desc">${s.choiceA.desc}</div></div></button><button class="choice-btn pink" onclick="makeChoice('B')"><div class="choice-letter">B</div><div class="choice-body"><div class="choice-label">${s.choiceB.label}</div><div class="choice-desc">${s.choiceB.desc}</div></div></button></div>`;
     html+=`</div>`;
+    html+=`<div class="outcome-panel outcome-good" id="outcome-good"><h3>✅ Great Choice!</h3><p>${s.choiceA.outcome}</p></div>`;
+    html+=`<div class="outcome-panel outcome-bad" id="outcome-bad"><h3>⚠️ Uh Oh!</h3><p>${s.choiceB.outcome}</p></div>`;
     html+=renderMission(s.mission);
     html+=`<div class="passport-reveal" id="passport"><div class="passport-label">✦ Passport Code ✦</div><div class="passport-code">${s.passportCode}</div></div>`;
     const href2=s.nextStation==='complete'?'?station=5&complete':`?station=${s.nextStation}`;
