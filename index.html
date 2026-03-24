@@ -640,9 +640,9 @@ function renderIntro(){
   app.innerHTML=`
   ${meterH}
   <div class="intro-wrap fade-in">
-    <div class="image-placeholder fade-in-d1">
-      <div class="img-icon">🧑‍🚀</div>
-      <div class="img-label">IMAGE: nova-character.png</div>
+    <div class="video-placeholder fade-in-d1">
+      <div class="play-icon">▶</div>
+      <div class="vid-label">VIDEO: welcome.mp4</div>
     </div>
     <div class="speech-bubble fade-in-d2" id="speech-text"><span class="cursor"></span></div>
     <div class="next-btn" id="start-btn" onclick="location.href='?station=0'" style="margin-top:28px;">Start the Quest →</div>
@@ -731,9 +731,7 @@ function render(){
   html+=`<div class="station-badge fade-in-d1" style="background:${s.badge.bg};color:${s.badge.color};border:1.5px solid ${s.badge.border};">📍 ${s.badge.text} — ${s.location}</div>`;
 
   if(s.isIntro){
-    html+=`<div class="image-placeholder fade-in-d2"><div class="img-icon">🧑‍🚀</div><div class="img-label">IMAGE: nova-character.png</div></div>`;
     html+=`<div class="intro-vs fade-in-d3"><div class="vs-text">— versus —</div><div class="villain-avatar">👾</div><div class="villain-name">Notif the Gremlin</div></div>`;
-    html+=`<div class="image-placeholder fade-in-d3"><div class="img-icon">👾</div><div class="img-label">IMAGE: notif-gremlin.png</div></div>`;
     html+=`<div class="hero-card fade-in-d3" style="background:${s.heroCard.bg}"><h2 class="hero-title">${s.heroCard.title}</h2>${s.heroCard.html}</div>`;
     html+=`<div class="video-placeholder fade-in-d4" onclick="playVideo(this,'${s.introVideo}')"><div class="play-icon">▶</div><div class="vid-label">VIDEO: VID-00_NOVA_Intro.mp4</div></div><video class="video-player" controls playsinline></video>`;
     html+=`<div class="mission-card visible fade-in-d5"><div class="mission-header"><span class="mission-icon">🗣️</span><span class="mission-title">Say Together</span></div><div class="say-together">"Screens are a tool. We choose when to use them."</div></div>`;
