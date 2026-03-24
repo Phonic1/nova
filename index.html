@@ -640,10 +640,6 @@ function renderIntro(){
   app.innerHTML=`
   ${meterH}
   <div class="intro-wrap fade-in">
-    <div class="intro-nova-wrap fade-in-d1">
-      <div class="intro-nova-avatar">🧑‍🚀</div>
-      <div class="intro-nova-name">Nova</div>
-    </div>
     <div class="image-placeholder fade-in-d1">
       <div class="img-icon">🧑‍🚀</div>
       <div class="img-label">IMAGE: nova-character.png</div>
@@ -735,7 +731,6 @@ function render(){
   html+=`<div class="station-badge fade-in-d1" style="background:${s.badge.bg};color:${s.badge.color};border:1.5px solid ${s.badge.border};">📍 ${s.badge.text} — ${s.location}</div>`;
 
   if(s.isIntro){
-    html+=`<div class="intro-character fade-in-d2"><div class="char-avatar">🧑‍🚀</div><div class="char-name">Nova</div></div>`;
     html+=`<div class="image-placeholder fade-in-d2"><div class="img-icon">🧑‍🚀</div><div class="img-label">IMAGE: nova-character.png</div></div>`;
     html+=`<div class="intro-vs fade-in-d3"><div class="vs-text">— versus —</div><div class="villain-avatar">👾</div><div class="villain-name">Notif the Gremlin</div></div>`;
     html+=`<div class="image-placeholder fade-in-d3"><div class="img-icon">👾</div><div class="img-label">IMAGE: notif-gremlin.png</div></div>`;
